@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Model
+namespace TicketApp.Model
 {
     /// <summary>
     /// Representara los estados posibles de un Ticket dentro del sistema, digase Cerrado o Abierto

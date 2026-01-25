@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using TicketApp.Model.Entities;
-using TicketApp.Model.Enums;
+using TicketApp.Model;
 
 namespace TicketApp.Model.Store
 {
@@ -39,7 +39,6 @@ namespace TicketApp.Model.Store
             return _tickets.ToList();
         }
 
-        >
         // Busca un ticket por ID
         
         public Ticket? GetById(int id)

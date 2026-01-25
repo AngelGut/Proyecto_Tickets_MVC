@@ -1,11 +1,8 @@
 ﻿using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Windows;
 using System.Windows.Input;
-using Controller;
-using TicketApp.Application;
-using TicketApp.Application.Controllers;
-using TicketApp.Model;
+
+using Controller; // SOLO Controller. Nada de Model.
 
 namespace TicketApp
 {
@@ -13,16 +10,27 @@ namespace TicketApp
     {
         private readonly TicketController _controller;
 
-        // Guardará el ticket seleccionado al hacer clic en una tarjeta
-        private Ticket _ticketSeleccionado;
+        // La View guarda el seleccionado como DTO (no como Model)
+        private TicketDto? _ticketSeleccionado;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            var store = new TicketStore();
-            _controller = new TicketController(store);
+            // ✅ La View crea el controller.
+            // IMPORTANTÍSIMO: Para crear el Store, la View NO debe conocer Model.
+            // Solución limpia: el Controller expone un "factory" o constructor sin parámetros,
+            // o inyectas desde App startup.
+            //
+            // Como tú estás en evaluación, te doy una opción limpia:
+            // Crear el store dentro del Controller (ver nota abajo).
 
+            InitializeComponent();
+
+            // ✅ INICIALIZA el controller (ya tienes el constructor sin parámetros)
+            _controller = new TicketController();
+
+            // ✅ opcional: cargar lista al iniciar
             RefrescarLista();
         }
 
@@ -31,7 +39,7 @@ namespace TicketApp
             string titulo = TxtTitulo.Text;
             string descripcion = TxtDescripcion.Text;
 
-            OperationResult<List<Ticket>> result = _controller.CreateTicket(titulo, descripcion);
+            OperationResult<List<TicketDto>> result = _controller.CreateTicket(titulo, descripcion);
 
             TxtMensaje.Text = result.Message;
 
@@ -51,9 +59,9 @@ namespace TicketApp
                 return;
             }
 
-            TicketStatus nuevoEstado = _ticketSeleccionado.Estado == TicketStatus.Abierto
-                ? TicketStatus.Cerrado
-                : TicketStatus.Abierto;
+            TicketStatusDto nuevoEstado = (_ticketSeleccionado.Estado == TicketStatusDto.Abierto)
+                ? TicketStatusDto.Cerrado
+                : TicketStatusDto.Abierto;
 
             var result = _controller.ChangeStatus(_ticketSeleccionado.Id, nuevoEstado);
 
@@ -66,6 +74,15 @@ namespace TicketApp
             }
         }
 
+        private void Ticket_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is FrameworkElement element && element.DataContext is TicketDto ticket)
+            {
+                _ticketSeleccionado = ticket;
+                TxtMensaje.Text = $"Ticket #{ticket.Id} seleccionado";
+            }
+        }
+
         private void RefrescarLista()
         {
             var result = _controller.GetTickets();
@@ -73,14 +90,5 @@ namespace TicketApp
                 IcTickets.ItemsSource = result.Data;
         }
 
-        // Se ejecuta cuando el usuario hace clic en una tarjeta
-        private void Ticket_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (sender is FrameworkElement element && element.DataContext is Ticket ticket)
-            {
-                _ticketSeleccionado = ticket;
-                TxtMensaje.Text = $"Ticket #{ticket.Id} seleccionado";
-            }
-        }
     }
 }

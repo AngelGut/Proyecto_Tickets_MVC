@@ -1,153 +1,181 @@
-﻿using Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
-
-// ============================================================
-// Archivo: TicketController.cs
-// Proyecto: TicketApp.Application (Controller layer)
-// Objetivo: Implementar los casos de uso que la View ejecuta:
-//           - Crear ticket
-//           - Listar tickets
-//           - Cambiar estado
-// Regla: NO dibuja UI. Devuelve datos y resultados.
-// ============================================================
+using TicketApp.Model;               // Enum real del dominio (Model)
+using TicketApp.Model.Entities;      // Entidad Ticket (Model)
+using TicketApp.Model.Store;         // Almacén en memoria (Model)
 
 namespace Controller
 {
     /// <summary>
-    /// Controller principal para gestionar tickets.
-    /// En MVC, este Controller:
-    /// - recibe eventos/datos de la View
-    /// - ejecuta la lógica de flujo (casos de uso)
-    /// - coordina el Model (incluyendo el Store)
-    /// - devuelve resultados a la View para que actualice la UI
+    /// Controlador principal del sistema de tickets.
+    /// 
+    /// Responsabilidad dentro de MVC:
+    /// - Actúa como intermediario entre la View y el Model.
+    /// - Recibe eventos y datos provenientes de la View.
+    /// - Ejecuta los casos de uso de la aplicación.
+    /// - Coordina el acceso al Model.
+    /// - Devuelve datos procesados (DTOs) a la View.
+    /// 
+    /// IMPORTANTE:
+    /// - La View NO conoce el Model.
+    /// - El Controller SÍ conoce el Model (esto es correcto en MVC).
+    /// - La View trabaja exclusivamente con DTOs definidos en Controller.
     /// </summary>
     public class TicketController
     {
-        // ============================================================
-        // Store único en memoria.
-        // Debe existir UNA sola instancia durante la ejecución,
-        // para que la lista no se "reinicie" en cada operación.
-        // ============================================================
+        /// <summary>
+        /// Store en memoria que gestiona la colección de tickets.
+        /// 
+        /// Vive en el Model y simula una capa de persistencia.
+        /// El Controller lo utiliza para ejecutar los casos de uso.
+        /// </summary>
         private readonly TicketStore _store;
 
         /// <summary>
-        /// Constructor que recibe el store.
-        /// Esto permite:
-        /// - mantener una instancia única
-        /// - facilitar pruebas
-        /// - desacoplar la creación del store
+        /// Constructor sin parámetros.
+        /// 
+        /// Se utiliza cuando la aplicación se ejecuta normalmente.
+        /// Permite que la View cree el Controller SIN conocer el Model,
+        /// ya que el Controller se encarga internamente de instanciar el Store.
+        /// 
+        /// Este enfoque mantiene el desacoplamiento View ↔ Model.
+        /// </summary>
+        public TicketController()
+        {
+            _store = new TicketStore();
+        }
+
+        /// <summary>
+        /// Constructor con inyección de dependencias.
+        /// 
+        /// Se utiliza principalmente para:
+        /// - Pruebas unitarias.
+        /// - Simular distintos Stores.
+        /// - Mayor flexibilidad en escenarios avanzados.
         /// </summary>
         public TicketController(TicketStore store)
         {
-            // Validación defensiva: si store viene null, explota temprano.
             _store = store ?? throw new ArgumentNullException(nameof(store));
         }
 
-        // ============================================================
-        // CASO DE USO 1: Crear Ticket
-        // ============================================================
         /// <summary>
-        /// Crea un ticket con título y descripción, lo guarda en el store,
-        /// y devuelve la lista actualizada para que la View refresque.
+        /// Mapea una entidad del Model (Ticket) a un DTO del Controller (TicketDto).
+        /// 
+        /// Este método:
+        /// - Evita que la View acceda directamente al Model.
+        /// - Traduce enums del Model a enums del Controller.
+        /// - Formatea datos para presentación en la UI.
+        /// 
+        /// Es un punto clave para mantener MVC limpio.
         /// </summary>
-        public OperationResult<List<Ticket>> CreateTicket(string titulo, string descripcion)
+        private static TicketDto MapToDto(Ticket t)
         {
-            // -------------------------
-            // Validaciones de flujo
-            // -------------------------
+            return new TicketDto
+            {
+                // Identificador único del ticket
+                Id = t.Id,
 
-            // Validación de título: obligatorio para evitar tickets vacíos.
+                // Datos básicos del ticket
+                Titulo = t.Titulo,
+                Descripcion = t.Descripcion,
+
+                // Conversión de estado del Model al estado usado por la View
+                Estado = (t.Estado == TicketStatus.Abierto)
+                    ? TicketStatusDto.Abierto
+                    : TicketStatusDto.Cerrado,
+
+                // Fecha convertida a texto legible para la interfaz gráfica
+                FechaCreacionTexto = t.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+            };
+        }
+
+        /// <summary>
+        /// Caso de uso: Crear un nuevo ticket.
+        /// 
+        /// Flujo:
+        /// 1. Valida los datos recibidos desde la View.
+        /// 2. Solicita al Store la creación del ticket (Model).
+        /// 3. Obtiene la lista actualizada de tickets.
+        /// 4. Convierte los tickets a DTOs.
+        /// 5. Devuelve el resultado a la View.
+        /// </summary>
+        public OperationResult<List<TicketDto>> CreateTicket(string titulo, string descripcion)
+        {
+            // Validación de negocio básica
             if (string.IsNullOrWhiteSpace(titulo))
-                return OperationResult<List<Ticket>>.Fail("El título es obligatorio.");
+                return OperationResult<List<TicketDto>>
+                    .Fail("El título es obligatorio.");
 
-            // Descripción puede ser opcional, pero si quieren forzarla:
-            // if (string.IsNullOrWhiteSpace(descripcion))
-            //     return OperationResult<List<Ticket>>.Fail("La descripción es obligatoria.");
-
-            // Normalizamos (limpiamos) espacios.
+            // Normalización de texto
             titulo = titulo.Trim();
             descripcion = (descripcion ?? string.Empty).Trim();
 
-            // -------------------------
-            // Ejecución del caso de uso
-            // -------------------------
+            // El Store se encarga de crear y almacenar el ticket
+            _store.Add(titulo, descripcion);
 
-            // Creamos la entidad Ticket.
-            // Nota: si su Ticket tiene otro constructor, ajusta aquí.
-            var ticket = new Ticket
-            {
-                // Id normalmente lo asigna el Store (autoincrement).
-                Titulo = titulo,
-                Descripcion = descripcion,
-                Estado = TicketStatus.Abierto,
-                FechaCreacion = DateTime.Now
-            };
+            // Conversión del Model a DTO para la View
+            var dtos = _store.GetAll()
+                             .Select(MapToDto)
+                             .ToList();
 
-            // Guardamos en memoria.
-            _store.Add(ticket);
-
-            // Devolvemos la lista actualizada para que la View la pinte.
-            var ticketsActualizados = _store.GetAll();
-
-            return OperationResult<List<Ticket>>.Ok(
-                ticketsActualizados,
-                "Ticket creado correctamente."
-            );
+            return OperationResult<List<TicketDto>>
+                .Ok(dtos, "Ticket creado correctamente.");
         }
 
-        // ============================================================
-        // CASO DE USO 2: Obtener tickets
-        // ============================================================
         /// <summary>
-        /// Devuelve todos los tickets actuales en memoria.
-        /// La View lo usará para cargar/refrescar el DataGrid o ListView.
+        /// Caso de uso: Obtener todos los tickets.
+        /// 
+        /// La View utiliza este método para:
+        /// - Cargar la lista inicial.
+        /// - Refrescar la interfaz.
         /// </summary>
-        public OperationResult<List<Ticket>> GetTickets()
+        public OperationResult<List<TicketDto>> GetTickets()
         {
-            var tickets = _store.GetAll();
+            var dtos = _store.GetAll()
+                             .Select(MapToDto)
+                             .ToList();
 
-            // Aunque esté vacío, sigue siendo un éxito (no es un error).
-            return OperationResult<List<Ticket>>.Ok(tickets, "Listado cargado.");
+            return OperationResult<List<TicketDto>>
+                .Ok(dtos, "Listado cargado.");
         }
 
-        // ============================================================
-        // CASO DE USO 3: Cambiar estado del ticket
-        // ============================================================
         /// <summary>
-        /// Cambia el estado de un ticket (Abierto/Cerrado) por Id,
-        /// y devuelve la lista actualizada.
+        /// Caso de uso: Cambiar el estado de un ticket.
+        /// 
+        /// Flujo:
+        /// 1. Recibe el estado desde la View (DTO).
+        /// 2. Convierte el estado DTO al enum del Model.
+        /// 3. Solicita al Store el cambio de estado.
+        /// 4. Devuelve la lista actualizada en forma de DTOs.
         /// </summary>
-        public OperationResult<List<Ticket>> ChangeStatus(int id, TicketStatus status)
+        public OperationResult<List<TicketDto>> ChangeStatus(int id, TicketStatusDto statusDto)
         {
-            // -------------------------
-            // Validaciones de flujo
-            // -------------------------
-
+            // Validación del identificador
             if (id <= 0)
-                return OperationResult<List<Ticket>>.Fail("Debe seleccionar un ticket válido.");
+                return OperationResult<List<TicketDto>>
+                    .Fail("Debe seleccionar un ticket válido.");
 
-            // -------------------------
-            // Ejecución del caso de uso
-            // -------------------------
+            // Traducción del estado DTO al estado del Model
+            TicketStatus statusModel =
+                (statusDto == TicketStatusDto.Abierto)
+                    ? TicketStatus.Abierto
+                    : TicketStatus.Cerrado;
 
-            // Pedimos al store actualizar.
-            bool updated = _store.UpdateStatus(id, status);
+            // Solicitud de cambio al Model
+            bool updated = _store.ChangeStatus(id, statusModel);
 
             if (!updated)
-                return OperationResult<List<Ticket>>.Fail("No se encontró el ticket a modificar.");
+                return OperationResult<List<TicketDto>>
+                    .Fail("No se encontró el ticket a modificar.");
 
-            // Lista actualizada para refrescar UI.
-            var ticketsActualizados = _store.GetAll();
+            // Retorno de la lista actualizada
+            var dtos = _store.GetAll()
+                             .Select(MapToDto)
+                             .ToList();
 
-            return OperationResult<List<Ticket>>.Ok(
-                ticketsActualizados,
-                "Estado del ticket actualizado."
-            );
+            return OperationResult<List<TicketDto>>
+                .Ok(dtos, "Estado actualizado.");
         }
     }
 }

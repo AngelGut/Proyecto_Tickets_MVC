@@ -1,5 +1,5 @@
 ﻿using System;
-using TicketApp.Model.Enums;
+using TicketApp.Model;
 
 namespace TicketApp.Model.Entities
 {
