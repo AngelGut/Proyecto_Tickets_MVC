@@ -1,11 +1,17 @@
-﻿namespace TicketApp.Model.Enums
+﻿using System;
+
+namespace Model
 {
-    //aque hacemos un enum esto para saver el estado del ticket
-    // donde 0 sera abierto y 1  cerrado
+    /// <summary>
+    /// Representara los estados posibles de un Ticket dentro del sistema, digase Cerrado o Abierto
+    /// El uso del enum nos dejara controlar y restringir los valores validos que puede tener el estado de un ticket
+    /// que puede tener el estado de un ticket.
+    /// </summary>
+    
     public enum TicketStatus
     {
-        Disponible = 0,
-        Ocupado = 1
-
+        //TODO: Abiero representa un ticket que esta en proceso de resolucion, Cerrado representa un ticket que ya fue resuelto
+        Abierto,
+        Cerrado
     }
 }
