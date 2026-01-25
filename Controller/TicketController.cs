@@ -1,4 +1,6 @@
-﻿using Model;
+﻿using TicketApp.Model.Enums;
+using TicketApp.Model.Common;
+using TicketApp.Model.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

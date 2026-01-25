@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+
 // ============================================================
 // Archivo: OperationResult.cs
 // Proyecto: TicketApp.Application (Controller layer)

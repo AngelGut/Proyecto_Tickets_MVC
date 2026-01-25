@@ -23,7 +23,7 @@ namespace TicketApp.Model.Entities
             Id = id;
             Titulo = titulo;
             Descripcion = descripcion;
-            Estado = TicketStatus.Abierto;
+            Estado = TicketStatus.Disponible;
             FechaCreacion = DateTime.Now;
         }
 

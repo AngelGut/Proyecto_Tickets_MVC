@@ -39,7 +39,7 @@ namespace TicketApp.Model.Store
             return _tickets.ToList();
         }
 
-        >
+        
         // Busca un ticket por ID
         
         public Ticket? GetById(int id)
