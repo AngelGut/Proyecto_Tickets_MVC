@@ -101,7 +101,7 @@
 
                                     <StackPanel>
 
-                                        <TextBlock Text="Ticket #{Binding Id}"
+                                        <TextBlock Text="{Binding Id, StringFormat=Ticket \#{0}}"
                                                    FontWeight="Bold"
                                                    FontSize="12"
                                                    Foreground="#64748B"/>
