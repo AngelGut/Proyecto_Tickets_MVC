@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="Controller/Controller.csproj" />
   <Project Path="Model/Model.csproj" />
-  <Project Path="Proyecto_Tickets_MVC/View.csproj" />
+  <Project Path="View/View.csproj" Id="e0cfb406-8751-41b6-b9bd-72109d3364ca" />
 </Solution>
