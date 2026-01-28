@@ -3,7 +3,7 @@ using System.Linq;
 using TicketApp.Model.Entities;
 using TicketApp.Model;
 
-namespace TicketApp.Model.Store
+namespace Model
 {
 
     //Almacenamiento en memoria de los tickets

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Model;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TicketApp.Model;               // Enum real del dominio (Model)
 using TicketApp.Model.Entities;      // Entidad Ticket (Model)
-using TicketApp.Model.Store;         // Almacén en memoria (Model)
 
 namespace Controller
 {

@@ -1,21 +1,23 @@
 ﻿using System;
 using TicketApp.Model;
 
-namespace Model
+namespace TicketApp.Model.Entities
 {
-    /// <summary>
-    /// Esta clase contiene los datos principales y las reglas basicas  que definen el comportamiento de un ticket
-    /// </summary>
+
+    // Entidad principal del sistema
+    //Representa un Ticket de soporte
+
     public class Ticket
     {
-        //TODO: Estas son las propiedades basicas que debe tener un ticket
         public int Id { get; private set; }
         public string Titulo { get; private set; }
         public string Descripcion { get; private set; }
         public TicketStatus Estado { get; private set; }
         public DateTime FechaCreacion { get; private set; }
 
-        //TODO: Este Constructor inicializa un ticket con los datos basicos y establece el estado inicial
+
+        // Constructor: solo el modelo crea tickets
+
         public Ticket(int id, string titulo, string descripcion)
         {
             //TODO: Esta es un Validacion basica encargada de asegurar que el titulo no este vacio
@@ -29,10 +31,12 @@ namespace Model
             FechaCreacion = DateTime.Now;
         }
 
-        //TODO: Este metodo permite cerrar un ticket, cambiando su estado a Cerrado
-        public void Cerrar()
+
+        //Cambia el estado del ticket
+
+        public void CambiarEstado(TicketStatus nuevoEstado)
         {
-            Estado = TicketStatus.Cerrado;
+            Estado = nuevoEstado;
         }
     }
 }
