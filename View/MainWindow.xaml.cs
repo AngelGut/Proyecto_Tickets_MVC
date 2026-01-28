@@ -20,17 +20,17 @@ namespace TicketApp
             // ✅ La View crea el controller.
             // IMPORTANTÍSIMO: Para crear el Store, la View NO debe conocer Model.
             // Solución limpia: el Controller expone un "factory" o constructor sin parámetros,
-            // o inyectas desde App startup.
+            // o se inyecta desde App startup.
             //
-            // Como tú estás en evaluación, te doy una opción limpia:
-            // Crear el store dentro del Controller (ver nota abajo).
+            // 
+            // Crear el store dentro del Controller.
 
             InitializeComponent();
 
-            // ✅ INICIALIZA el controller (ya tienes el constructor sin parámetros)
+            // ✅ INICIALIZA el controller 
             _controller = new TicketController();
 
-            // ✅ opcional: cargar lista al iniciar
+            // cargar lista al iniciar
             RefrescarLista();
         }
 
